@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weather Forecast</title>
+    <!-- Bootstrap CSS (integrity removed for brevity) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Global Styles */
+      body {
+        font-family: "Poppins", sans-serif;
+        background: url("https://img.freepik.com/premium-photo/dramatic-supercell-storm-with-rain-open-fields_198067-401364.jpg")
+          no-repeat center center fixed;
+        background-size: cover;
+        padding: 60px 20px;
+        margin: 0;
+      }
+      /* Container */
+      .container {
+        max-width: 1300px;
+        margin: auto;
+      }
+      /* Headings */
+      h1 {
+        font-weight: 600;
+        text-align: center;
+        color: #fff;
+        text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+        margin-bottom: 40px;
+        font-size: 2.5rem;
+      }
+      /* Cards */
+      .card {
+        backdrop-filter: blur(10px);
+        background-color: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 40px;
+        padding: 30px;
+      }
+      /* Form elements */
+      .form-select,
+      .btn,
+      .form-control {
+        border-radius: 10px;
+        margin-top: 10px;
+      }
+      .form-control {
+        border: 1px solid #ccc;
+        padding: 12px;
+        transition: border 0.3s;
+        font-size: 1rem;
+      }
+      .form-control:focus {
+        border-color: #007bff;
+        box-shadow: none;
+      }
+      .btn-primary {
+        background: linear-gradient(45deg, #007bff, #00aaff);
+        border: none;
+        padding: 12px 20px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+      }
+      /* Chart container styling */
+      .chart-container {
+        position: relative;
+        width: 100%;
+        height: 320px;
+        margin-bottom: 20px;
+      }
+      /* Calendar (Forecast) Table Styling */
+      .forecast-table {
+        margin-top: 20px;
+      }
+      .forecast-table caption {
+        caption-side: top;
+        text-align: center;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .forecast-table th,
+      .forecast-table td {
+        vertical-align: middle;
+        text-align: center;
+        padding: 10px;
+      }
+      .forecast-table th {
+        background-color: #007bff;
+        color: #fff;
+      }
+      .forecast-table td {
+        border: 1px solid #dee2e6;
+        min-height: 80px;
+      }
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2rem;
+        }
+        .card {
+          padding: 20px;
+          margin-bottom: 30px;
+        }
+        .btn-primary {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Weather Forecast</h1>
+      <div class="card">
+        <!-- Forecast Form -->
+        <form id="forecastForm">
+          <!-- City Selection -->
+          <div class="mb-3">
+            <label for="citySelect" class="form-label fw-bold">Select City</label>
+            <select id="citySelect" class="form-select" required>
+              <option value="" selected disabled>Select a city...</option>
+              <option value="Anuradhapura">Anuradhapura</option>
+              <option value="Polonnaruwa">Polonnaruwa</option>
+              <option value="Kandy">Kandy</option>
+              <option value="Nuwara Eliya">Nuwara Eliya</option>
+              <option value="Kalutara">Kalutara</option>
+              <option value="Kurunegala">Kurunegala</option>
+            </select>
+          </div>
+          <!-- Year Selection -->
+          <div class="mb-3">
+            <label for="yearSelect" class="form-label fw-bold">Select Forecast Year</label>
+            <select id="yearSelect" class="form-select" required>
+              <option value="" selected disabled>Select a year...</option>
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+              <option value="2029">2029</option>
+              <option value="2030">2030</option>
+            </select>
+          </div>
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary w-100">
+            Get Forecast
+          </button>
+        </form>
+      </div>
+
+      <!-- Result Box (initially hidden) -->
+      <div id="result" class="card d-none">
+        <!-- FLEX container: heading + button in same row -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h3 class="m-0">
+            Forecast for <span id="resultCity"></span>, Year:
+            <span id="resultYear"></span>
+          </h3>
+          <!-- The button you want! -->
+          <button id="paddyReportBtn" class="btn btn-secondary ms-3">
+            View Paddy Suitability Report
+          </button>
+        </div>
+
+        <!-- Toggle Buttons for Rainfall/Temperature -->
+        <div class="mb-3">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary" id="rainfallBtn">Rainfall</button>
+            <button type="button" class="btn btn-outline-secondary" id="temperatureBtn">Temperature</button>
+          </div>
+        </div>
+
+        <!-- Month Filter Dropdown -->
+        <div class="text-center mb-3">
+          <label for="monthSelect" class="form-label">Select Month: </label>
+          <select id="monthSelect" class="form-select w-auto d-inline-block">
+            <option value="all">All Months (Monthly Totals)</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+
+        <!-- Primary Chart -->
+        <div class="chart-container">
+          <canvas id="primaryChart"></canvas>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div id="forecastSummary" class="mb-4"></div>
+
+        <!-- Calendar View -->
+        <div class="table-responsive forecast-table">
+          <table class="table table-bordered table-striped" id="forecastTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // DOM references
+        const forecastForm = document.getElementById("forecastForm");
+        const resultBox = document.getElementById("result");
+        const resultCity = document.getElementById("resultCity");
+        const resultYear = document.getElementById("resultYear");
+        const monthSelect = document.getElementById("monthSelect");
+        const forecastSummary = document.getElementById("forecastSummary");
+        const forecastTable = document.getElementById("forecastTable");
+        const primaryChartCtx = document.getElementById("primaryChart").getContext("2d");
+
+        const rainfallBtn = document.getElementById("rainfallBtn");
+        const temperatureBtn = document.getElementById("temperatureBtn");
+        const paddyReportBtn = document.getElementById("paddyReportBtn");
+
+        // State variables
+        let currentChartMode = "rainfall";
+        let primaryChart;
+
+        let globalRainDates = [];
+        let globalRainValues = [];
+        let globalTempDates = [];
+        let globalTempMin = [];
+        let globalTempMean = [];
+        let globalTempMax = [];
+        let dailyDataMap = {};
+
+        // Utility functions
+        function roundUpToNext50(value) {
+          return Math.ceil(value / 50) * 50;
+        }
+
+        function calculateMovingAverage(data, windowSize = 7) {
+          return data.map((_, idx) => {
+            const start = Math.max(0, idx - windowSize + 1);
+            const windowData = data.slice(start, idx + 1);
+            const sum = windowData.reduce((acc, cur) => acc + cur, 0);
+            return sum / windowData.length;
+          });
+        }
+
+        function displaySummary(data, unit) {
+          if (!data.length) {
+            forecastSummary.innerHTML = "<p class='text-danger'>No data.</p>";
+            return;
+          }
+          const totalDays = data.length;
+          const sumVal = data.reduce((acc, cur) => acc + cur, 0);
+          const avgVal = sumVal / totalDays;
+          const minVal = Math.min(...data);
+          const maxVal = Math.max(...data);
+          forecastSummary.innerHTML = `
+            <p class="mb-1"><strong>Total:</strong> ${sumVal.toFixed(2)} ${unit}</p>
+            <p class="mb-1"><strong>Average:</strong> ${avgVal.toFixed(2)} ${unit}</p>
+            <p class="mb-0"><strong>Min / Max:</strong> ${minVal.toFixed(2)} / ${maxVal.toFixed(2)} ${unit}</p>
+          `;
+        }
+
+        // Chart updates
+        function updateRainChart(labels, data, fixedRange, stepSize) {
+          const movingAvg = calculateMovingAverage(data);
+          if (primaryChart) primaryChart.destroy();
+
+          primaryChart = new Chart(primaryChartCtx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Rainfall (mm)",
+                  data: data,
+                  backgroundColor: "rgba(54, 162, 235, 0.2)",
+                  borderColor: "rgba(54, 162, 235, 1)",
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.3,
+                },
+                {
+                  label: "7-Day Moving Avg (mm)",
+                  data: movingAvg,
+                  backgroundColor: "rgba(255, 159, 64, 0.2)",
+                  borderColor: "rgba(255, 159, 64, 1)",
+                  borderWidth: 2,
+                  fill: false,
+                  borderDash: [5, 5],
+                  tension: 0.3,
+                },
+              ],
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  min: fixedRange ? fixedRange.min : undefined,
+                  max: fixedRange ? fixedRange.max : undefined,
+                  ticks: { stepSize: stepSize || undefined },
+                  title: { display: true, text: "Rainfall (mm)" },
+                },
+                x: { title: { display: true, text: "Day" } },
+              },
+              plugins: {
+                legend: { display: true, position: "top" },
+                tooltip: { mode: "index", intersect: false },
+              },
+              responsive: true,
+              maintainAspectRatio: false,
+            },
+          });
+          displaySummary(data, "mm");
+        }
+
+        function updateTemperatureChart(labels, arrMin, arrMean, arrMax) {
+          if (primaryChart) primaryChart.destroy();
+
+          primaryChart = new Chart(primaryChartCtx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Temp Min (°C)",
+                  data: arrMin,
+                  borderColor: "rgba(75, 192, 192, 1)",
+                  backgroundColor: "rgba(75, 192, 192, 0.1)",
+                  fill: false,
+                  borderWidth: 2,
+                  tension: 0.3,
+                },
+                {
+                  label: "Temp Mean (°C)",
+                  data: arrMean,
+                  borderColor: "rgba(255, 159, 64, 1)",
+                  backgroundColor: "rgba(255, 159, 64, 0.1)",
+                  fill: false,
+                  borderWidth: 2,
+                  tension: 0.3,
+                },
+                {
+                  label: "Temp Max (°C)",
+                  data: arrMax,
+                  borderColor: "rgba(255, 99, 132, 1)",
+                  backgroundColor: "rgba(255, 99, 132, 0.1)",
+                  fill: false,
+                  borderWidth: 2,
+                  tension: 0.3,
+                },
+              ],
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Temperature (°C)" },
+                },
+                x: { title: { display: true, text: "Day" } },
+              },
+              plugins: {
+                legend: { display: true, position: "top" },
+                tooltip: { mode: "index", intersect: false },
+              },
+              responsive: true,
+              maintainAspectRatio: false,
+            },
+          });
+          displaySummary(arrMean, "°C");
+        }
+
+        // Table generation
+        function createBasicTable(labels, values, mode) {
+          let html = "<tbody>";
+          for (let i = 0; i < values.length; i++) {
+            if (i % 7 === 0) html += "<tr>";
+            const cellLabel = labels && labels[i] ? labels[i] : `Item ${i + 1}`;
+            const displayVal = mode === "rainfall"
+              ? `${values[i].toFixed(2)} mm`
+              : `${values[i].toFixed(2)} °C`;
+            html += `<td><strong>${cellLabel}</strong><br>${displayVal}</td>`;
+            if (i % 7 === 6) html += "</tr>";
+          }
+          if (values.length % 7 !== 0) {
+            const pad = 7 - (values.length % 7);
+            for (let i = 0; i < pad; i++) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody>";
+          return html;
+        }
+
+        function createCalendarViewForMonth(year, month) {
+          const monthNum = parseInt(month, 10);
+          const firstDate = new Date(year, monthNum - 1, 1);
+          const lastDate = new Date(year, monthNum, 0);
+          const totalDays = lastDate.getDate();
+          // Monday as index 0
+          const startDay = (firstDate.getDay() + 6) % 7;
+          const monthNames = {
+            "01": "January",
+            "02": "February",
+            "03": "March",
+            "04": "April",
+            "05": "May",
+            "06": "June",
+            "07": "July",
+            "08": "August",
+            "09": "September",
+            "10": "October",
+            "11": "November",
+            "12": "December"
+          };
+          const captionText = `${monthNames[month]} ${year}`;
+
+          let html = `<caption>${captionText}</caption>`;
+          html += "<thead><tr>";
+          const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          weekdays.forEach((dayName) => {
+            html += `<th>${dayName}</th>`;
+          });
+          html += "</tr></thead><tbody>";
+          let day = 1;
+          for (let week = 0; week < 6; week++) {
+            html += "<tr>";
+            for (let d = 0; d < 7; d++) {
+              if (week === 0 && d < startDay) {
+                html += "<td></td>";
+              } else if (day > totalDays) {
+                html += "<td></td>";
+              } else {
+                const dayStr = String(day).padStart(2, "0");
+                const dateStr = `${year}-${month}-${dayStr}`;
+                let displayRain = "";
+                let displayTemp = "";
+                if (dailyDataMap[dateStr]) {
+                  const { rain, tempMin, tempMean, tempMax } = dailyDataMap[dateStr];
+                  if (rain !== null && rain !== undefined)
+                    displayRain = `${rain.toFixed(2)} mm`;
+                  if (tempMin !== null && tempMean !== null && tempMax !== null)
+                    displayTemp = `${tempMin.toFixed(2)}°C - ${tempMax.toFixed(2)}°C (mean ${tempMean.toFixed(2)}°C)`;
+                }
+                let cellContent = `<strong>${day}</strong>`;
+                if (currentChartMode === "rainfall") {
+                  if (displayRain) cellContent += `<br>${displayRain}`;
+                  if (displayTemp)
+                    cellContent += `<br><span style="font-size:0.85em;color:#777;">${displayTemp}</span>`;
+                } else {
+                  if (displayTemp) cellContent += `<br>${displayTemp}`;
+                  if (displayRain)
+                    cellContent += `<br><span style="font-size:0.85em;color:#777;">${displayRain}</span>`;
+                }
+                html += `<td>${cellContent}</td>`;
+                day++;
+              }
+            }
+            html += "</tr>";
+            if (day > totalDays) break;
+          }
+          html += "</tbody>";
+          return html;
+        }
+
+        // Aggregations
+        function aggregateMonthlyRain(labels, values) {
+          const monthlyTotals = {};
+          labels.forEach((dateStr, idx) => {
+            const mm = dateStr.substring(5, 7);
+            if (!monthlyTotals[mm]) monthlyTotals[mm] = 0;
+            monthlyTotals[mm] += values[idx];
+          });
+          const monthsOrder = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+          const monthNames = {
+            "01": "January", "02": "February", "03": "March", "04": "April",
+            "05": "May", "06": "June", "07": "July", "08": "August",
+            "09": "September", "10": "October", "11": "November", "12": "December"
+          };
+          const aggLabels = [];
+          const aggValues = [];
+          monthsOrder.forEach((m) => {
+            if (monthlyTotals[m] !== undefined) {
+              aggLabels.push(monthNames[m]);
+              aggValues.push(monthlyTotals[m]);
+            }
+          });
+          return { aggLabels, aggValues };
+        }
+
+        function aggregateMonthlyTemperature(labels, arrMin, arrMean, arrMax) {
+          const monthlyAgg = {};
+          labels.forEach((dateStr, idx) => {
+            const mm = dateStr.substring(5, 7);
+            if (!monthlyAgg[mm]) {
+              monthlyAgg[mm] = { minSum: 0, meanSum: 0, maxSum: 0, count: 0 };
+            }
+            monthlyAgg[mm].minSum += arrMin[idx];
+            monthlyAgg[mm].meanSum += arrMean[idx];
+            monthlyAgg[mm].maxSum += arrMax[idx];
+            monthlyAgg[mm].count++;
+          });
+          const monthsOrder = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+          const monthNames = {
+            "01": "January", "02": "February", "03": "March", "04": "April",
+            "05": "May", "06": "June", "07": "July", "08": "August",
+            "09": "September", "10": "October", "11": "November", "12": "December"
+          };
+          const aggLabels = [];
+          const aggMin = [];
+          const aggMean = [];
+          const aggMax = [];
+          monthsOrder.forEach((m) => {
+            if (monthlyAgg[m]) {
+              const { minSum, meanSum, maxSum, count } = monthlyAgg[m];
+              if (count > 0) {
+                aggLabels.push(monthNames[m]);
+                aggMin.push(minSum / count);
+                aggMean.push(meanSum / count);
+                aggMax.push(maxSum / count);
+              }
+            }
+          });
+          return { aggLabels, aggMin, aggMean, aggMax };
+        }
+
+        // Form submission: fetch forecast data
+        forecastForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const city = document.getElementById("citySelect").value.trim();
+          const year = document.getElementById("yearSelect").value.trim();
+          if (!city || !year) {
+            alert("Please select both city and year.");
+            return;
+          }
+
+          // Show the result box
+          resultBox.classList.remove("d-none");
+          resultCity.textContent = city;
+          resultYear.textContent = year;
+          forecastTable.innerHTML = `<tr><td colspan="7">Loading forecast...</td></tr>`;
+          forecastSummary.innerHTML = "";
+
+          // Reset data arrays
+          globalRainDates = [];
+          globalRainValues = [];
+          globalTempDates = [];
+          globalTempMin = [];
+          globalTempMean = [];
+          globalTempMax = [];
+          dailyDataMap = {};
+
+          // 1) Fetch Rainfall
+          try {
+            const response = await fetch(
+              `http://127.0.0.1:9090/forecast?city=${encodeURIComponent(city)}&year=${encodeURIComponent(year)}`
+            );
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.detail || "Error fetching rainfall forecast.");
+            }
+            const dataRain = await response.json();
+            dataRain.forecast.forEach((record) => {
+              const dateStr = record.ds.substring(0, 10);
+              const dailyRain = record.yhat_hybrid ?? record.mean_yhat ?? 0;
+              globalRainDates.push(dateStr);
+              globalRainValues.push(dailyRain);
+              if (!dailyDataMap[dateStr]) {
+                dailyDataMap[dateStr] = { rain: null, tempMin: null, tempMean: null, tempMax: null };
+              }
+              dailyDataMap[dateStr].rain = dailyRain;
+            });
+          } catch (err) {
+            console.error("Rain Error:", err);
+            forecastTable.innerHTML = `<tr><td colspan="7" class="text-danger">Rainfall Error: ${err.message}</td></tr>`;
+            return;
+          }
+
+          // 2) Fetch Temperature
+          try {
+            const response = await fetch(
+              `http://127.0.0.1:9090/tem_forecast?city=${encodeURIComponent(city)}&year=${encodeURIComponent(year)}`
+            );
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.detail || "Error fetching temperature forecast.");
+            }
+            const dataTemp = await response.json();
+            dataTemp.forecast.forEach((record) => {
+              const dateStr = record.ds.substring(0, 10);
+              const tMin = record.min_yhat_hybrid ?? record.min_yhat ?? 0;
+              const tMean = record.mean_yhat_hybrid ?? record.mean_yhat ?? 0;
+              const tMax = record.max_yhat_hybrid ?? record.max_yhat ?? 0;
+              globalTempDates.push(dateStr);
+              globalTempMin.push(tMin);
+              globalTempMean.push(tMean);
+              globalTempMax.push(tMax);
+              if (!dailyDataMap[dateStr]) {
+                dailyDataMap[dateStr] = { rain: null, tempMin: null, tempMean: null, tempMax: null };
+              }
+              dailyDataMap[dateStr].tempMin = tMin;
+              dailyDataMap[dateStr].tempMean = tMean;
+              dailyDataMap[dateStr].tempMax = tMax;
+            });
+          } catch (err) {
+            console.error("Temp Error:", err);
+            alert("Could not fetch temperature data. Only rainfall will be shown.");
+          }
+
+          currentChartMode = "rainfall";
+          monthSelect.value = "all";
+          handleMonthChange();
+        });
+
+        // Handle month or chart-mode changes
+        function handleMonthChange() {
+          const selectedMonth = monthSelect.value;
+          if (currentChartMode === "rainfall") {
+            if (selectedMonth === "all") {
+              const { aggLabels, aggValues } = aggregateMonthlyRain(globalRainDates, globalRainValues);
+              const yMax = roundUpToNext50(Math.max(...aggValues));
+              updateRainChart(aggLabels, aggValues, { min: 0, max: yMax }, 50);
+              forecastTable.innerHTML = createBasicTable(aggLabels, aggValues, "rainfall");
+            } else {
+              const year = resultYear.textContent.trim();
+              forecastTable.innerHTML = createCalendarViewForMonth(year, selectedMonth);
+              const dailyLabels = [];
+              const dailyVals = [];
+              for (let i = 0; i < globalRainDates.length; i++) {
+                const d = globalRainDates[i];
+                if (d.substring(5, 7) === selectedMonth) {
+                  dailyLabels.push(d.substring(8));
+                  dailyVals.push(globalRainValues[i]);
+                }
+              }
+              updateRainChart(dailyLabels, dailyVals);
+            }
+          } else {
+            // Temperature mode
+            if (selectedMonth === "all") {
+              const { aggLabels, aggMin, aggMean, aggMax } = aggregateMonthlyTemperature(
+                globalTempDates,
+                globalTempMin,
+                globalTempMean,
+                globalTempMax
+              );
+              updateTemperatureChart(aggLabels, aggMin, aggMean, aggMax);
+              forecastTable.innerHTML = createBasicTable(aggLabels, aggMean, "temperature");
+            } else {
+              const year = resultYear.textContent.trim();
+              forecastTable.innerHTML = createCalendarViewForMonth(year, selectedMonth);
+              const dailyLabels = [];
+              const dailyMin = [];
+              const dailyMean = [];
+              const dailyMax = [];
+              for (let i = 0; i < globalTempDates.length; i++) {
+                const d = globalTempDates[i];
+                if (d.substring(5, 7) === selectedMonth) {
+                  dailyLabels.push(d.substring(8));
+                  dailyMin.push(globalTempMin[i]);
+                  dailyMean.push(globalTempMean[i]);
+                  dailyMax.push(globalTempMax[i]);
+                }
+              }
+              updateTemperatureChart(dailyLabels, dailyMin, dailyMean, dailyMax);
+            }
+          }
+        }
+
+        monthSelect.addEventListener("change", handleMonthChange);
+        rainfallBtn.addEventListener("click", () => {
+          currentChartMode = "rainfall";
+          rainfallBtn.classList.add("active");
+          temperatureBtn.classList.remove("active");
+          handleMonthChange();
+        });
+        temperatureBtn.addEventListener("click", () => {
+          currentChartMode = "temperature";
+          temperatureBtn.classList.add("active");
+          rainfallBtn.classList.remove("active");
+          handleMonthChange();
+        });
+
+        // Example: If you want to do a redirect with the city/year to a paddy report
+        paddyReportBtn.addEventListener("click", () => {
+          const city = document.getElementById("citySelect").value.trim();
+          const year = document.getElementById("yearSelect").value.trim();
+          // For example, redirect to a second page with query parameters
+          window.location.href = `paddy_report.html?city=${encodeURIComponent(city)}&year=${encodeURIComponent(year)}`;
+        });
+      });
+    </script>
+  </body>
+</html>
